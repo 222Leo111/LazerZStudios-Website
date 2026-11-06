@@ -1,0 +1,55 @@
+[
+  {
+    "id": "tech-through-time",
+    "n": "Tech Through Time",
+    "u": "https://lazergames2026.itch.io/tech-through-time",
+    "c": "#5b93cc",
+    "r": "-1deg",
+    "img": "assets/tech-through-time.jpg",
+    "type": "ai",
+    "home": true,
+    "date": ""
+  },
+  {
+    "id": "sebiumleoium",
+    "n": "Sebium",
+    "u": "https://lazergames2026.itch.io/sebiumleoium",
+    "c": "#3fae62",
+    "r": ".8deg",
+    "img": "assets/sebium.jpg",
+    "type": "ai",
+    "home": true,
+    "date": ""
+  },
+  {
+    "id": "sebium-multiplayer",
+    "n": "Sebium Multiplayer",
+    "u": "https://lazergames2026.itch.io/sebium-multiplayer",
+    "c": "#3fae62",
+    "r": "-.6deg",
+    "img": "assets/sebium.jpg",
+    "type": "ai",
+    "beta": true,
+    "date": ""
+  },
+  {
+    "id": "restaurant-roasting",
+    "n": "Restaurant Roasting",
+    "u": "https://lazergames2026.itch.io/restaurant-roasting",
+    "c": "#d9a92b",
+    "r": "1deg",
+    "img": "assets/restaurant-roasting.jpg",
+    "type": "ai",
+    "date": ""
+  },
+  {
+    "id": "stranded-survival",
+    "n": "Stranded Survival",
+    "u": "https://lazergames2026.itch.io/stranded-survival",
+    "c": "#6f9f5f",
+    "r": "-.8deg",
+    "type": "ai",
+    "date": "",
+    "img": "assets/stranded-survival.jpg"
+  }
+]

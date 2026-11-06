@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LazerZStudios admin</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1230;--card:#1a2250;--line:#3a4a96;--text:#e8edff;--mute:#9fb0e0;--yellow:#f0c53a;--ink:#04060f}
+*{box-sizing:border-box}body{margin:0;padding:20px 16px 60px;color:var(--text);background:var(--bg);font:17px/1.5 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto}h1{font-size:28px;margin:0 0 4px}h2{font-size:21px;margin:0 0 12px}p{color:var(--mute);margin:0 0 14px}
+section{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:20px;margin:18px 0}
+label{display:block;font-weight:600}
+input,textarea,select{width:100%;min-height:50px;margin:6px 0 14px;padding:12px;border-radius:12px;border:2px solid var(--line);background:#0d1230;color:var(--text);font:inherit}
+input[type=checkbox]{width:22px;min-height:0;height:22px;margin:0}
+button{min-height:52px;padding:12px 22px;border-radius:12px;border:3px solid var(--ink);font:inherit;font-weight:700;cursor:pointer;color:var(--ink);background:var(--yellow);box-shadow:4px 4px 0 var(--ink)}
+button:active{transform:translate(4px,4px);box-shadow:none}button.g{background:none;color:var(--text);border-color:var(--line);box-shadow:none;min-height:44px;padding:6px 14px;font-weight:600}button:disabled{opacity:.5}
+.it{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.it:first-child{border-top:0}.it span{flex:1 1 180px}
+.ck{display:flex;gap:8px;align-items:center;font-weight:400;margin:0 0 14px}.row{display:flex;gap:10px;flex-wrap:wrap}
+.m{min-height:1.5em;margin:12px 0 0;color:#7df0b8}details summary{cursor:pointer;font-weight:700;min-height:44px}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+</style></head><body><main>
+<h1>LazerZStudios admin</h1>
+<p>Post news and add games from your phone. Changes save straight to your GitHub repo and go live in a minute or two.</p>
+
+<section><details id="set"><summary id="sst">Set up publishing</summary>
+<p style="margin-top:12px">One-time setup. Your details stay on this device only.</p>
+<ol style="color:var(--mute);padding-left:20px;margin:0 0 14px">
+<li>On GitHub: Settings, Developer settings, Fine-grained tokens, Generate new token.</li>
+<li>Repository access: Only select repositories, then choose your site repo.</li>
+<li>Permissions: Contents set to Read and write. Generate and copy the token.</li></ol>
+<label>Repo<input id="repo" placeholder="yourname/lazerz-site" autocapitalize="none" autocorrect="off"></label>
+<label>Token<input id="tok" type="password" placeholder="github_pat_..." autocomplete="off"></label>
+<div class="row"><button id="sv" type="button">Save setup</button><button class="g" id="fg" type="button">Forget token</button></div>
+<p class="m" id="s-msg" aria-live="polite"></p></details></section>
+
+<section><h2>Announcements</h2>
+<label>Type<select id="a-k"><option>News</option><option>Update</option><option>New game</option><option>Event</option><option>Beta</option></select></label>
+<label>Title<input id="a-t" maxlength="90"></label>
+<label>Message<textarea id="a-x" rows="4" maxlength="800"></textarea></label>
+<label>Link (optional)<input id="a-u" placeholder="https://" inputmode="url"></label>
+<label class="ck"><input type="checkbox" id="a-p"> Pin to the banner at the top</label>
+<div class="row"><button id="a-go" type="button">Post announcement</button><button class="g" id="a-cancel" type="button" hidden>Cancel edit</button></div>
+<p class="m" id="a-msg" aria-live="polite"></p>
+<h2 style="margin-top:22px">Your posts</h2><div id="a-list"></div></section>
+
+<section><h2>Add a game</h2>
+<label>Game title<input id="g-t" maxlength="60"></label>
+<label>itch.io link<input id="g-u" placeholder="https://yourname.itch.io/game-name" inputmode="url" autocapitalize="none"></label>
+<label>Release date<input id="g-d" type="date"></label>
+<label>Category<select id="g-c"><option value="">Choose one…</option><option value="ai">AI</option><option value="non-ai">Non-AI</option></select></label>
+<label>Cover image (optional)<input id="g-i" type="file" accept="image/*"></label>
+<label class="ck"><input type="checkbox" id="g-h"> Show on the home page</label>
+<label class="ck"><input type="checkbox" id="g-b"> Mark as Beta</label>
+<div class="row"><button id="g-go" type="button">Add game</button></div>
+<p class="m" id="g-msg" aria-live="polite"></p>
+<p style="margin-top:12px">No cover image? The site shows a “Cover art coming soon” placeholder until you add one.</p></section>
+
+<section><h2>Manage games</h2><div id="gbox"></div>
+<div class="row" style="margin-top:14px"><button id="gm-save" type="button">Save changes</button></div>
+<p class="m" id="gm-msg" aria-live="polite"></p>
+<p style="margin-top:12px">Hide takes a game off the site without deleting it.</p></section>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)},PAL=['#5b93cc','#3fae62','#d9a92b','#8f7ad8','#e27b5e','#5cc5a2'],ROT=['-1deg','.8deg','-.6deg','1deg'],AN=[],GM=[],EDIT=null;
+function cfg(){try{var r=localStorage.getItem('gh_repo'),t=localStorage.getItem('gh_tok');return r&&t?{r:r,t:t}:null}catch(e){return null}}
+function say(id,t,ok){var m=$(id);m.style.color=ok===false?'#ff9bb0':'#7df0b8';m.textContent=t}
+function safe(u){return /^https?:\/\//i.test(u)}
+function api(c,method,body,path){var h={Authorization:'Bearer '+c.t,Accept:'application/vnd.github+json'};if(body)h['Content-Type']='application/json';return fetch('https://api.github.com/repos/'+c.r+'/contents/'+path+(method==='GET'?'?t='+Date.now():''),{method:method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'})}
+function dec(j){return JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\s/g,'')))))}
+function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o,null,2)+'\n')))}
+function why(e){var s=e&&e.status;return s==='setup'?'Set up publishing first (top of this page).':s==='dup'?'That game is already in the list.':s===401||s===403?'GitHub refused the token. Check it has Contents read and write for this repo.':s===404?'Repo not found. Check the repo name and token access.':s===409||s===422?'The file changed while saving. Try again.':s?'GitHub error '+s+'. Try again.':'Could not reach GitHub. Check your connection.'}
+async function read(path){var c=cfg();if(!c)throw{status:'setup'};var r=await api(c,'GET',null,path);if(r.status===404)return{list:[]};if(r.status!==200)throw{status:r.status};var j=await r.json();return{list:dec(j),sha:j.sha}}
+async function change(path,fn,msg){var c=cfg();if(!c)throw{status:'setup'};var d=await read(path),nx=fn(d.list),p=await api(c,'PUT',{message:msg,content:enc(nx),sha:d.sha},path);if(!p.ok)throw{status:p.status};return nx}
+async function run(btn,id,fn){btn.disabled=true;try{var m=await fn();if(m)say(id,m)}catch(e){say(id,why(e),false)}btn.disabled=false}
+function bt(t,f){var b=document.createElement('button');b.type='button';b.className='g';b.textContent=t;b.onclick=function(){f(b)};return b}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+async function load(path){try{if(cfg())return (await read(path)).list;return await (await fetch(path)).json()}catch(e){return[]}}
+
+/* announcements */
+function resetA(){['a-t','a-x','a-u'].forEach(function(i){$(i).value=''});$('a-p').checked=false;EDIT=null;$('a-go').textContent='Post announcement';$('a-cancel').hidden=true}
+function drawA(){var l=$('a-list');l.textContent='';if(!AN.length)l.textContent='No announcements yet.';
+  AN.forEach(function(a){var d=el('div','it'),s=el('span','',(a.pin?'[Pinned] ':'')+a.d+'  ·  '+a.title);d.appendChild(s);
+    d.appendChild(bt('Edit',function(){$('a-k').value=a.t||'News';$('a-t').value=a.title;$('a-x').value=a.text;$('a-u').value=a.url||'';$('a-p').checked=!!a.pin;EDIT=a.id;$('a-go').textContent='Save changes';$('a-cancel').hidden=false;$('a-t').scrollIntoView({behavior:'smooth',block:'center'})}));
+    d.appendChild(bt(a.pin?'Unpin':'Pin',function(b){run(b,'a-msg',async function(){AN=await change('announcements.json',function(l){return l.map(function(x){return x.id===a.id?Object.assign({},x,{pin:!x.pin}):x})},'Toggle pin');drawA();return 'Updated. Live in a minute or two.'})}));
+    d.appendChild(bt('Remove',function(b){if(!confirm('Remove this announcement?'))return;run(b,'a-msg',async function(){AN=await change('announcements.json',function(l){return l.filter(function(x){return x.id!==a.id})},'Remove announcement');drawA();return 'Removed.'})}));
+    l.appendChild(d)})}
+$('a-cancel').onclick=resetA;
+$('a-go').onclick=function(){
+  var ti=$('a-t').value.trim(),tx=$('a-x').value.trim(),u=$('a-u').value.trim();
+  if(!ti||!tx)return say('a-msg','Add a title and a message.',false);
+  if(u&&!safe(u))return say('a-msg','The link must start with https://',false);
+  var n=new Date(),d=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'),k=$('a-k').value,pin=$('a-p').checked,ed=EDIT;
+  run($('a-go'),'a-msg',async function(){
+    AN=await change('announcements.json',function(l){return ed?l.map(function(x){return x.id===ed?Object.assign({},x,{t:k,title:ti,text:tx,url:u,pin:pin}):x}):[{id:n.getTime().toString(36),t:k,title:ti,text:tx,url:u,pin:pin,d:d}].concat(l)},ed?'Edit announcement':'Add announcement: '+ti);
+    resetA();drawA();return 'Published! It will be live in a minute or two.'})};
+
+/* add a game */
+function shrink(f){return new Promise(function(res,rej){var u=URL.createObjectURL(f),i=new Image();i.onload=function(){var w=Math.min(720,i.width),h=Math.round(i.height*w/i.width),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);URL.revokeObjectURL(u);c.toBlob(function(b){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1])};r.readAsDataURL(b)},'image/jpeg',.82)};i.onerror=rej;i.src=u})}
+$('g-go').onclick=function(){
+  var ti=$('g-t').value.trim(),u=$('g-u').value.trim(),dt=$('g-d').value,ty=$('g-c').value,f=$('g-i').files[0];
+  if(!ti)return say('g-msg','Add the game title.',false);
+  if(!/^https:\/\/[\w.-]+\.itch\.io\/[\w-]+\/?$/i.test(u))return say('g-msg','Paste the game’s itch.io link, like https://yourname.itch.io/game-name',false);
+  if(!ty)return say('g-msg','Choose AI or Non-AI so the game is labeled.',false);
+  var id=u.replace(/\/$/,'').split('/').pop().toLowerCase(),home=$('g-h').checked,beta=$('g-b').checked;
+  run($('g-go'),'g-msg',async function(){
+    var c=cfg();if(!c)throw{status:'setup'};var img='';
+    if(f){var b64=await shrink(f),path='assets/'+id+'.jpg',r=await api(c,'GET',null,path),sha=r.status===200?(await r.json()).sha:undefined,p=await api(c,'PUT',{message:'Add cover for '+ti,content:b64,sha:sha},path);if(!p.ok)throw{status:p.status};img=path}
+    GM=await change('games.json',function(l){if(l.some(function(x){return x.id===id}))throw{status:'dup'};var n=l.length,it={id:id,n:ti,u:u,c:PAL[n%PAL.length],r:ROT[n%ROT.length],type:ty,manual:true};if(dt)it.date=dt;if(img){it.img=img;it.img_locked=true}if(home)it.home=true;if(beta)it.beta=true;return l.concat([it])},'Add game: '+ti);
+    ['g-t','g-u','g-d','g-i'].forEach(function(i){$(i).value=''});$('g-c').value='';$('g-h').checked=$('g-b').checked=false;drawG();
+    return 'Added! It will appear on the site in a minute or two.'})};
+
+/* manage games */
+function drawG(){var box=$('gbox');box.textContent='';if(!GM.length)box.textContent='No games yet.';
+  GM.forEach(function(g){var r=el('div','it'),s=el('span','',g.n),sel=document.createElement('select'),h=el('label','ck'),x=document.createElement('input'),hd=el('label','ck'),y=document.createElement('input');
+    sel.style.cssText='width:auto;margin:0';[['ai','AI'],['non-ai','Non-AI'],['unsorted','Unsorted']].forEach(function(o){var op=el('option','',o[1]);op.value=o[0];if((g.type||'unsorted')===o[0])op.selected=true;sel.appendChild(op)});sel.onchange=function(){g.type=sel.value};
+    x.type='checkbox';x.checked=!!g.home;x.onchange=function(){g.home=x.checked};h.style.margin='0';h.appendChild(x);h.appendChild(document.createTextNode('Home'));
+    y.type='checkbox';y.checked=!!g.hidden;y.onchange=function(){g.hidden=y.checked};hd.style.margin='0';hd.appendChild(y);hd.appendChild(document.createTextNode('Hide'));
+    r.appendChild(s);r.appendChild(sel);r.appendChild(h);r.appendChild(hd);box.appendChild(r)})}
+$('gm-save').onclick=function(){run($('gm-save'),'gm-msg',async function(){
+  var ed=GM.slice();GM=await change('games.json',function(l){ed.forEach(function(g){l.forEach(function(x){if(x.id===g.id){x.type=g.type||'unsorted';if(g.home)x.home=true;else delete x.home;if(g.hidden)x.hidden=true;else delete x.hidden}})});return l},'Update games');drawG();return 'Saved. Live in a minute or two.'})};
+
+/* setup */
+function status(){var c=cfg();$('sst').textContent=c?'Publishing is on ('+c.r+')':'Set up publishing';$('set').open=!c;try{$('repo').value=localStorage.getItem('gh_repo')||''}catch(e){}}
+$('sv').onclick=function(){var r=$('repo').value.trim(),t=$('tok').value.trim();if(!/^[\w.-]+\/[\w.-]+$/.test(r))return say('s-msg','Enter your repo as yourname/reponame.',false);if(!t)return say('s-msg','Paste your token.',false);
+  try{localStorage.setItem('gh_repo',r);localStorage.setItem('gh_tok',t)}catch(e){return say('s-msg','This browser blocked saving. Turn off private browsing and try again.',false)}
+  $('tok').value='';status();say('s-msg','Saved.');init()};
+$('fg').onclick=function(){try{localStorage.removeItem('gh_tok')}catch(e){}status();say('s-msg','Token removed from this device.')};
+async function init(){AN=await load('announcements.json');drawA();GM=await load('games.json');drawG()}
+status();init();
+</script></body></html>
